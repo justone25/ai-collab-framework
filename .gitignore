@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime artifacts
+*.lock
+
+# Collaboration session data (generated per-project, not part of the framework)
+.collab/logs/activity.jsonl
+.collab/reviews/REVIEW-*.md
+.collab/plans/*.md
+!.collab/plans/.gitkeep
