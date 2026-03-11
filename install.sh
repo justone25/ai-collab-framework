@@ -18,9 +18,9 @@ if ! command -v git &>/dev/null; then
     exit 1
 fi
 
-# Must be run inside an existing project directory
-if [ ! -d .git ] && [ ! -f package.json ] && [ ! -f Makefile ] && [ ! -f README.md ]; then
-    echo "⚠️  This doesn't look like a project directory."
+# Warn if running in home directory or root (likely accidental)
+if [ "$PWD" = "$HOME" ] || [ "$PWD" = "/" ]; then
+    echo "⚠️  You're in $PWD — this doesn't look like a project directory."
     echo "   Run this command in your project root:"
     echo "   cd /path/to/your/project && curl -fsSL <install-url> | bash"
     exit 1
