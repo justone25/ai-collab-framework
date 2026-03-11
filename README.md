@@ -1,14 +1,14 @@
 # 🤖 AI Collaborative Development Framework
 
-## Claude Code × Codex 协作开发框架
+English | **[中文](README.zh-CN.md)**
 
-让 Claude Code 和 Codex 在同一个项目中实现**异步共享感知、互相评审**的协作开发。
+Enable **async shared awareness and mutual code review** between Claude Code and Codex working on the same project.
 
 ---
 
-## 🧠 设计理念
+## 🧠 How It Works
 
-两个 AI Agent 都能读写项目文件。我们利用这一点，**用文件系统作为通信通道**：
+Both AI agents can read and write project files. This framework uses the **filesystem as a communication channel**:
 
 ```
 ┌──────────────┐     .collab/logs/activity.jsonl     ┌──────────────┐
@@ -20,34 +20,34 @@
         └──────────── Shared Project Files ───────────────────┘
 ```
 
-### 核心机制
+### Core Mechanisms
 
-| 机制 | 实现方式 | 目的 |
-|------|---------|------|
-| **行为日志** | `.collab/logs/activity.jsonl` | 记录每次操作，让对方感知 |
-| **互相评审** | `.collab/reviews/REVIEW-*.md` | 指出问题、学习亮点 |
-| **共享上下文** | `.collab/context/` | 保持对项目状态的共识 |
-| **协议规范** | `.collab/PROTOCOL.md` | 统一行为规则 |
-| **Git Hook** | `.git/hooks/post-commit.ai-collab` | 可选自动捕获代码变更 |
+| Mechanism | Implementation | Purpose |
+|-----------|---------------|---------|
+| **Activity Log** | `.collab/logs/activity.jsonl` | Record every action for peer awareness |
+| **Peer Reviews** | `.collab/reviews/REVIEW-*.md` | Identify issues, highlight strengths |
+| **Shared Context** | `.collab/context/` | Maintain consensus on project state |
+| **Protocol** | `.collab/PROTOCOL.md` | Unified behavior rules |
+| **Git Hook** | `.git/hooks/post-commit.ai-collab` | Optional auto-capture of commits |
 
 ---
 
-## 🚀 Quick Start / 快速开始
+## 🚀 Quick Start
 
-### 一键远程安装（推荐）
+### One-Line Remote Install (Recommended)
 
-在你的项目根目录执行：
+Run in your project root:
 
 ```bash
 cd your-project
 curl -fsSL https://raw.githubusercontent.com/justone25/ai-collab-framework/main/install.sh | bash
 ```
 
-安装脚本会自动下载框架文件、复制到当前项目、配置 git hook，不会修改你的现有代码。
+The installer downloads the framework, copies files into your project, and sets up the git hook. It does not modify your existing code.
 
-### 本地安装
+### Local Install
 
-如果你已经 clone 了本仓库：
+If you've already cloned this repo:
 
 ```bash
 cd your-project
@@ -56,112 +56,113 @@ bash /path/to/ai-collab-framework/scripts/setup-collab.sh /path/to/ai-collab-fra
 
 ---
 
-## 📖 使用方法
+## 📖 Usage
 
-安装后，在项目目录下打开两个终端窗口，分别启动两个 Agent：
+After installation, open two terminal windows in your project directory:
 
 ```bash
-# 终端 1                          # 终端 2
+# Terminal 1                       # Terminal 2
 cd your-project                    cd your-project
 claude                             codex
 ```
 
-两个 Agent 启动后会自动读取各自的指令文件（`CLAUDE.md` / `AGENTS.md`），无需额外引导。
+Both agents auto-read their instruction files (`CLAUDE.md` / `AGENTS.md`) on startup — no extra prompting needed.
 
-### 核心命令
+### Core Commands
 
-在任一 Agent 对话框中输入：
+Type any of these in either agent's chat:
 
-| 命令 | 作用 |
-|------|------|
-| **"同步"** 或 **"sync"** | 读取对方最近操作，写 review |
-| **"评审"** 或 **"review"** | 评审对方最后一次操作 |
-| **"状态"** 或 **"status"** | 查看整体协作状态面板 |
-| **"交接"** 或 **"handoff"** | 写详细上下文交接文档 |
+| Command | Action |
+|---------|--------|
+| **"sync"** | Read peer's recent actions, write a review |
+| **"review"** | Review the peer's last action |
+| **"status"** | Show collaboration status dashboard |
+| **"handoff"** | Write a detailed context handoff document |
 
-也可以直接在终端运行脚本查看状态：
+You can also run scripts directly in the terminal:
 
 ```bash
-./scripts/collab-status.sh         # 协作面板
-./scripts/sync-peer.sh claude-code # 查看 codex 的新动态
-./scripts/sync-peer.sh codex       # 查看 claude-code 的新动态
+./scripts/collab-status.sh         # Status dashboard
+./scripts/sync-peer.sh claude-code # See what codex has been doing
+./scripts/sync-peer.sh codex       # See what claude-code has been doing
 ```
 
 ---
 
-## 🔄 完整使用示例
+## 🔄 End-to-End Example
 
-以下是一个真实的协作场景：用两个 Agent 协作开发一个用户认证模块。
+A real collaboration scenario: two agents building a user auth module together.
 
-### Round 1: Claude Code 做架构设计
+### Round 1: Claude Code designs the architecture
 
 ```
-┌─ 终端 1 (Claude Code) ──────────────────────────────────────────────┐
+┌─ Terminal 1 (Claude Code) ──────────────────────────────────────────┐
 │                                                                      │
-│  你: 设计一个用户认证模块，要求支持 JWT + refresh token              │
+│  You: Design a user auth module with JWT + refresh token support     │
 │                                                                      │
 │  Claude Code:                                                        │
-│    → 输出架构方案                                                    │
-│    → 写入 .collab/plans/auth-plan.md                                │
-│    → 自动记录日志到 activity.jsonl                                   │
+│    → Outputs architecture proposal                                   │
+│    → Writes .collab/plans/auth-plan.md                              │
+│    → Auto-logs to activity.jsonl                                     │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-此时 `.collab/logs/activity.jsonl` 中多了一条：
+A new entry appears in `.collab/logs/activity.jsonl`:
 
 ```json
 {"agent":"claude-code","action_type":"design","summary":"Auth module architecture with JWT + refresh token",...}
 ```
 
-### Round 2: 切到 Codex，同步 + 评审
+### Round 2: Switch to Codex — sync + review
 
 ```
-┌─ 终端 2 (Codex) ────────────────────────────────────────────────────┐
+┌─ Terminal 2 (Codex) ────────────────────────────────────────────────┐
 │                                                                      │
-│  你: 同步一下                                                        │
-│                                                                      │
-│  Codex:                                                              │
-│    → 读取 activity.jsonl，发现 Claude Code 新增了架构设计            │
-│    → 读取 .collab/plans/auth-plan.md                                │
-│    → 写评审: "JWT 方案合理，建议 refresh token 加 rotation 机制"     │
-│    → 写入 .collab/reviews/REVIEW-1773200000-codex.md                │
-│                                                                      │
-│  你: 按照这个架构开始实现认证中间件                                  │
+│  You: sync                                                           │
 │                                                                      │
 │  Codex:                                                              │
-│    → 读取架构方案，编写 src/middleware/auth.ts                       │
-│    → 自动记录日志                                                    │
+│    → Reads activity.jsonl, discovers Claude's architecture design    │
+│    → Reads .collab/plans/auth-plan.md                               │
+│    → Writes review: "JWT approach is solid, suggest adding           │
+│      refresh token rotation"                                         │
+│    → Saves .collab/reviews/REVIEW-1773200000-codex.md               │
+│                                                                      │
+│  You: Implement the auth middleware based on that architecture       │
+│                                                                      │
+│  Codex:                                                              │
+│    → Reads the plan, writes src/middleware/auth.ts                   │
+│    → Auto-logs the action                                            │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Round 3: 切回 Claude Code，同步 + 评审 + 迭代
+### Round 3: Back to Claude Code — sync + review + iterate
 
 ```
-┌─ 终端 1 (Claude Code) ──────────────────────────────────────────────┐
+┌─ Terminal 1 (Claude Code) ──────────────────────────────────────────┐
 │                                                                      │
-│  你: 同步一下                                                        │
-│                                                                      │
-│  Claude Code:                                                        │
-│    → 发现 Codex 的 2 条新动态: 评审 + 代码实现                       │
-│    → 读取 src/middleware/auth.ts                                     │
-│    → 写评审:                                                         │
-│       "实现基本正确，但发现两个问题:                                 │
-│        1. 缺少 rate limiting，暴力破解风险                           │
-│        2. 错误响应泄露了内部堆栈信息"                                │
-│    → 写入 .collab/reviews/REVIEW-1773201000-claude-code.md          │
-│                                                                      │
-│  你: 把你评审里提到的两个问题修掉                                    │
+│  You: sync                                                           │
 │                                                                      │
 │  Claude Code:                                                        │
-│    → 添加 rate limiter 和安全的错误处理                              │
-│    → 自动记录日志                                                    │
+│    → Finds 2 new actions from Codex: review + implementation        │
+│    → Reads src/middleware/auth.ts                                    │
+│    → Writes review:                                                  │
+│       "Implementation is mostly correct, but found two issues:       │
+│        1. Missing rate limiting — brute force risk                   │
+│        2. Error responses leak internal stack traces"                │
+│    → Saves .collab/reviews/REVIEW-1773201000-claude-code.md         │
+│                                                                      │
+│  You: Fix the two issues from your review                            │
+│                                                                      │
+│  Claude Code:                                                        │
+│    → Adds rate limiter and secure error handling                     │
+│    → Auto-logs the action                                            │
 │                                                                      │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### 随时查看协作状态
+### Check collaboration status anytime
 
 ```bash
 $ ./scripts/collab-status.sh
@@ -190,82 +191,87 @@ $ ./scripts/collab-status.sh
   REVIEW-1773200000-codex.md
 ```
 
-### 协作循环总结
+### The Collaboration Loop
 
 ```
-   你给指令          你给指令          你给指令
-      │                 │                 │
-      ▼                 ▼                 ▼
-  ┌────────┐  同步  ┌────────┐  同步  ┌────────┐
-  │ Claude │ ─────▶ │  Codex │ ─────▶ │ Claude │  ...
-  │  设计  │        │ 评审+实现│       │ 评审+修复│
-  └────────┘        └────────┘        └────────┘
-      │                 │                 │
-      ▼                 ▼                 ▼
-  activity.jsonl    activity.jsonl    activity.jsonl
-  plans/auth.md     REVIEW-codex.md   REVIEW-claude.md
+  You instruct       You instruct       You instruct
+      │                  │                  │
+      ▼                  ▼                  ▼
+  ┌────────┐  sync   ┌────────┐  sync   ┌────────┐
+  │ Claude │ ──────▶ │  Codex │ ──────▶ │ Claude │  ...
+  │ design │         │review+  │        │review+  │
+  │        │         │implement│        │  fix    │
+  └────────┘         └────────┘         └────────┘
+      │                  │                  │
+      ▼                  ▼                  ▼
+  activity.jsonl     activity.jsonl     activity.jsonl
+  plans/auth.md      REVIEW-codex.md    REVIEW-claude.md
 ```
 
-**关键点：人类始终是指挥者。** 你决定何时切换 Agent、分配什么任务。框架只是确保切换时上下文不丢失。
+**Key point: You are always in control.** You decide when to switch agents and what tasks to assign. The framework just ensures context is preserved across switches.
 
 ---
 
-## 📁 Framework Structure / 框架结构
+## 📁 Framework Structure
 
 ```
 your-project/
-├── CLAUDE.md                    # Claude Code 的指令文件（自动读取）
-├── AGENTS.md                    # Codex 的指令文件（自动读取）
+├── CLAUDE.md                    # Claude Code instructions (auto-read)
+├── AGENTS.md                    # Codex instructions (auto-read)
 ├── scripts/
-│   ├── setup-collab.sh          # 一键安装脚本
-│   ├── log-action.sh            # 记录操作
-│   ├── collab-status.sh         # 协作状态面板
-│   ├── sync-peer.sh             # 同步对方操作
-│   └── create-review.sh         # 创建评审模板
+│   ├── setup-collab.sh          # Setup script
+│   ├── log-action.sh            # Log an action
+│   ├── collab-status.sh         # Status dashboard
+│   ├── sync-peer.sh             # Sync peer activity
+│   └── create-review.sh         # Create review template
 └── .collab/
-    ├── PROTOCOL.md              # 协作协议（核心规则）
+    ├── PROTOCOL.md              # Collaboration protocol (core rules)
     ├── logs/
-    │   └── activity.jsonl       # 操作日志（JSONL 格式）
+    │   └── activity.jsonl       # Activity log (JSONL)
     ├── reviews/
-    │   └── REVIEW-{ts}-{agent}.md  # 互评文件
+    │   └── REVIEW-{ts}-{agent}.md  # Peer review files
     ├── plans/
-    │   └── {feature}-plan.md    # 共享设计方案
+    │   └── {feature}-plan.md    # Shared design plans
     └── context/
-        ├── current_focus.md     # 当前工作焦点
-        ├── decisions.md         # 架构决策记录
-        └── known_issues.md      # 已知问题追踪
+        ├── current_focus.md     # Current work focus
+        ├── decisions.md         # Architecture decision records
+        └── known_issues.md      # Known issues tracker
 ```
 
 ---
 
-## ⚠️ Important Notes / 注意事项
+## ⚠️ Important Notes
 
-1. **双方均自动读取指令**：Claude Code 自动读取 `CLAUDE.md`，Codex 自动读取 `AGENTS.md`，两者启动后即遵守协作协议，无需额外引导。
+1. **Auto-read instructions**: Claude Code reads `CLAUDE.md`, Codex reads `AGENTS.md`. Both follow the collaboration protocol immediately on startup.
 
-2. **不是实时通信**：这是基于文件的异步协作，不是 WebSocket 实时通信。更准确地说，这是“异步共享感知”：每次启动、同步或查看状态时，双方都能看到对方已经写入的操作记录。
+2. **Not real-time**: This is file-based async collaboration, not WebSocket messaging. More precisely, it's "async shared awareness" — each agent sees what the other has written whenever it syncs.
 
-3. **日志会增长**：长期项目中 `activity.jsonl` 会变大，可以定期归档旧日志。
+3. **Log growth**: In long-running projects, `activity.jsonl` will grow. Archive old entries periodically.
 
-4. **Git 版本控制**：建议将 `.collab/` 纳入 git，这样协作历史也被版本控制。
+4. **Version control**: We recommend tracking `.collab/` in git so collaboration history is preserved.
 
-5. **Git Hook 为链式安装**：安装脚本会创建独立的 `post-commit.ai-collab` hook，并尽量把它挂接到现有 `post-commit`，避免直接覆盖已有 hook 逻辑。
+5. **Non-destructive hooks**: The installer creates a separate `post-commit.ai-collab` hook and chains it from your existing `post-commit` — it never overwrites your hooks.
 
-6. **人类仍是指挥者**：这个框架不是让两个 AI 自动对话，而是让你在两个 AI 间切换时保持上下文连续性。
+6. **Human in the loop**: This framework doesn't make two AIs talk to each other automatically. It keeps context continuous as *you* switch between them.
 
 ---
 
-## 🔧 Customization / 自定义
+## 🔧 Customization
 
-### 添加更多 Agent
-修改 `PROTOCOL.md`，在 Agent Identification 部分添加新的 agent 名称。
+### Add more agents
 
-### 修改日志格式
-编辑 `PROTOCOL.md` 中的 Activity Log Format 部分和 `log-action.sh`。
+Edit `PROTOCOL.md` → Agent Identification section.
 
-### 添加自定义命令
-在 `CLAUDE.md` 或 `AGENTS.md` 中添加新的自然语言命令映射。
+### Change log format
+
+Edit `PROTOCOL.md` → Activity Log Format section, and update `log-action.sh`.
+
+### Add custom commands
+
+Add new natural language command mappings in `CLAUDE.md` or `AGENTS.md`.
 
 ---
 
 ## License
-MIT — 自由使用和修改。
+
+MIT — free to use and modify.
