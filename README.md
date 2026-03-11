@@ -56,57 +56,157 @@ bash /path/to/ai-collab-framework/scripts/setup-collab.sh /path/to/ai-collab-fra
 
 ---
 
-## 📖 使用流程
+## 📖 使用方法
 
-### Step 1: 打开 Claude Code
+安装后，在项目目录下打开两个终端窗口，分别启动两个 Agent：
+
 ```bash
-cd your-project
-claude  # Claude Code 会自动读取 CLAUDE.md
+# 终端 1                          # 终端 2
+cd your-project                    cd your-project
+claude                             codex
 ```
-Claude Code 自动遵守协议，每次操作后记录日志。
 
-### Step 2: 打开 Codex
+两个 Agent 启动后会自动读取各自的指令文件（`CLAUDE.md` / `AGENTS.md`），无需额外引导。
+
+### 核心命令
+
+在任一 Agent 对话框中输入：
+
+| 命令 | 作用 |
+|------|------|
+| **"同步"** 或 **"sync"** | 读取对方最近操作，写 review |
+| **"评审"** 或 **"review"** | 评审对方最后一次操作 |
+| **"状态"** 或 **"status"** | 查看整体协作状态面板 |
+| **"交接"** 或 **"handoff"** | 写详细上下文交接文档 |
+
+也可以直接在终端运行脚本查看状态：
+
 ```bash
-cd your-project
-codex   # Codex 会自动读取 AGENTS.md
-```
-Codex 自动遵守协议，每次操作后记录日志。
-
-### Step 3: 切换工作时使用 "同步" 命令
-在任意一个 Agent 中说：
-- **"sync"** 或 **"同步"** → 查看对方最近的操作
-- **"review"** 或 **"评审"** → 评审对方最后一次操作
-- **"status"** 或 **"状态"** → 查看整体协作状态
-- **"handoff"** 或 **"交接"** → 写详细的上下文交接文档
-
-### Step 4: 查看协作面板
-```bash
-./scripts/collab-status.sh
+./scripts/collab-status.sh         # 协作面板
+./scripts/sync-peer.sh claude-code # 查看 codex 的新动态
+./scripts/sync-peer.sh codex       # 查看 claude-code 的新动态
 ```
 
 ---
 
-## 🔄 典型工作流示例
+## 🔄 完整使用示例
+
+以下是一个真实的协作场景：用两个 Agent 协作开发一个用户认证模块。
+
+### Round 1: Claude Code 做架构设计
 
 ```
-你 → Claude Code: "设计一个用户认证模块的架构"
-     Claude Code: 输出架构方案，写入 .collab/plans/auth-plan.md
-                  日志记录: {action_type: "design", summary: "Auth module architecture"}
-
-你 → Codex: "同步一下，看看 Claude 做了什么"
-     Codex: 读取日志，发现架构方案
-            评审: "JWT 方案合理，但建议考虑 refresh token rotation"
-            写入 .collab/reviews/REVIEW-xxx-codex.md
-
-你 → Codex: "按照这个架构开始实现"
-     Codex: 读取架构方案，开始编码
-            日志记录: {action_type: "code", summary: "Implemented auth middleware"}
-
-你 → Claude Code: "同步一下"
-     Claude Code: 读取日志和代码变更
-                  评审: "实现基本正确，但缺少 rate limiting 和错误日志"
-                  写入 .collab/reviews/REVIEW-xxx-claude-code.md
+┌─ 终端 1 (Claude Code) ──────────────────────────────────────────────┐
+│                                                                      │
+│  你: 设计一个用户认证模块，要求支持 JWT + refresh token              │
+│                                                                      │
+│  Claude Code:                                                        │
+│    → 输出架构方案                                                    │
+│    → 写入 .collab/plans/auth-plan.md                                │
+│    → 自动记录日志到 activity.jsonl                                   │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
+
+此时 `.collab/logs/activity.jsonl` 中多了一条：
+
+```json
+{"agent":"claude-code","action_type":"design","summary":"Auth module architecture with JWT + refresh token",...}
+```
+
+### Round 2: 切到 Codex，同步 + 评审
+
+```
+┌─ 终端 2 (Codex) ────────────────────────────────────────────────────┐
+│                                                                      │
+│  你: 同步一下                                                        │
+│                                                                      │
+│  Codex:                                                              │
+│    → 读取 activity.jsonl，发现 Claude Code 新增了架构设计            │
+│    → 读取 .collab/plans/auth-plan.md                                │
+│    → 写评审: "JWT 方案合理，建议 refresh token 加 rotation 机制"     │
+│    → 写入 .collab/reviews/REVIEW-1773200000-codex.md                │
+│                                                                      │
+│  你: 按照这个架构开始实现认证中间件                                  │
+│                                                                      │
+│  Codex:                                                              │
+│    → 读取架构方案，编写 src/middleware/auth.ts                       │
+│    → 自动记录日志                                                    │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Round 3: 切回 Claude Code，同步 + 评审 + 迭代
+
+```
+┌─ 终端 1 (Claude Code) ──────────────────────────────────────────────┐
+│                                                                      │
+│  你: 同步一下                                                        │
+│                                                                      │
+│  Claude Code:                                                        │
+│    → 发现 Codex 的 2 条新动态: 评审 + 代码实现                       │
+│    → 读取 src/middleware/auth.ts                                     │
+│    → 写评审:                                                         │
+│       "实现基本正确，但发现两个问题:                                 │
+│        1. 缺少 rate limiting，暴力破解风险                           │
+│        2. 错误响应泄露了内部堆栈信息"                                │
+│    → 写入 .collab/reviews/REVIEW-1773201000-claude-code.md          │
+│                                                                      │
+│  你: 把你评审里提到的两个问题修掉                                    │
+│                                                                      │
+│  Claude Code:                                                        │
+│    → 添加 rate limiter 和安全的错误处理                              │
+│    → 自动记录日志                                                    │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### 随时查看协作状态
+
+```bash
+$ ./scripts/collab-status.sh
+
+╔══════════════════════════════════════════════════╗
+║       AI Collaboration Status Dashboard          ║
+╚══════════════════════════════════════════════════╝
+
+📌 Current Focus:
+─────────────────
+  Status: 🟢 Implementing auth module
+
+📋 Recent Activity (last 10):
+─────────────────────────────
+  🟣 [2026-03-11T03:30:00Z] claude-code/design: Auth module architecture
+  🟢 [2026-03-11T03:35:00Z] codex/review: Reviewed auth architecture
+  🟢 [2026-03-11T03:40:00Z] codex/code: Implemented auth middleware
+  🟣 [2026-03-11T03:45:00Z] claude-code/review: Reviewed auth implementation
+  🟣 [2026-03-11T03:50:00Z] claude-code/code: Added rate limiting and error handling
+
+  📊 Total: 5 actions (🟣 Claude: 3 | 🟢 Codex: 2)
+
+📝 Review Files:
+─────────────────
+  REVIEW-1773201000-claude-code.md
+  REVIEW-1773200000-codex.md
+```
+
+### 协作循环总结
+
+```
+   你给指令          你给指令          你给指令
+      │                 │                 │
+      ▼                 ▼                 ▼
+  ┌────────┐  同步  ┌────────┐  同步  ┌────────┐
+  │ Claude │ ─────▶ │  Codex │ ─────▶ │ Claude │  ...
+  │  设计  │        │ 评审+实现│       │ 评审+修复│
+  └────────┘        └────────┘        └────────┘
+      │                 │                 │
+      ▼                 ▼                 ▼
+  activity.jsonl    activity.jsonl    activity.jsonl
+  plans/auth.md     REVIEW-codex.md   REVIEW-claude.md
+```
+
+**关键点：人类始终是指挥者。** 你决定何时切换 Agent、分配什么任务。框架只是确保切换时上下文不丢失。
 
 ---
 
