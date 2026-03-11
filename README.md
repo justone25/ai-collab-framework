@@ -11,13 +11,41 @@ Enable **async shared awareness and mutual code review** between Claude Code and
 Both AI agents can read and write project files. This framework uses the **filesystem as a communication channel**:
 
 ```
-┌──────────────┐     .collab/logs/activity.jsonl     ┌──────────────┐
-│              │  ──────── write action ──────────▶   │              │
-│  Claude Code │                                      │    Codex     │
-│              │  ◀──────── read & review ─────────   │              │
-└──────────────┘     .collab/reviews/REVIEW-*.md      └──────────────┘
-        │                                                     │
-        └──────────── Shared Project Files ───────────────────┘
+┌────────────────┐
+│                │
+│  Claude Code   │     ├◄───────┬──────────────┐
+│                │              │              │
+└────────┬───────┘              │         read/write
+         │                      │              │
+   write action                 │              │
+         │                      │              │
+         │                      │              │
+         ▼                      │              ▼
+┌────────────────┐              │  ┌──────────────────────┐
+│                │              │  │                      │
+│ activity.jsonl │              │  │ Shared Project Files │
+│                │              │  │                      │
+└────────┬───────┘              │  └──────────────────────┘
+         │                      │              ▲
+   read &│review                │              │
+         │                      │              │
+         │                      │              │
+         ▼                      │              │
+┌────────────────┐              │         read/write
+│                │              │              │
+│     Codex      │     ├────────┼──────────────┘
+│                │              │
+└────────┬───────┘              │
+         │                      │
+   write review                 │
+         │                      │
+         │                      │
+         ▼                      │
+┌────────────────┐              │
+│                │              │
+│  REVIEW-*.md   │    read─review
+│                │
+└────────────────┘
 ```
 
 ### Core Mechanisms
@@ -194,18 +222,25 @@ $ ./scripts/collab-status.sh
 ### The Collaboration Loop
 
 ```
-  You instruct       You instruct       You instruct
-      │                  │                  │
-      ▼                  ▼                  ▼
-  ┌────────┐  sync   ┌────────┐  sync   ┌────────┐
-  │ Claude │ ──────▶ │  Codex │ ──────▶ │ Claude │  ...
-  │ design │         │review+  │        │review+  │
-  │        │         │implement│        │  fix    │
-  └────────┘         └────────┘         └────────┘
-      │                  │                  │
-      ▼                  ▼                  ▼
-  activity.jsonl     activity.jsonl     activity.jsonl
-  plans/auth.md      REVIEW-codex.md    REVIEW-claude.md
+┌──────────────┐     ┌────────┐      ┌──────────────────┐      ┌─────────────────┐      ┌──────────────────┐
+│              │     │        │      │                  │      │                 │      │                  │
+│              │     │        │      │                  │      │                 │      │                  │
+│ You instruct ├────►│ Claude ├sync─►│      Codex       ├sync─►│      Claude     ├sync─►│       ...        │
+│              │     │ design │      │ review+implement │      │    review+fix   │      │                  │
+│              │     │        │      │                  │      │                 │      │                  │
+└──────────────┘     └────┬───┘      └─────────┬────────┘      └────────┬────────┘      └──────────────────┘
+                          │                    │                        │
+                          │                    │                        │
+                          │                    └────────────┐           └────────────┐
+                          │                                 │                        │
+                          │                                 │                        │
+                          │          ┌──────────────────┐   │  ┌─────────────────┐   │  ┌──────────────────┐
+                          │          │                  │   │  │                 │   │  │                  │
+                          │          │                  │   │  │                 │   │  │                  │
+                          └─────────►│  activity.jsonl  │   └─►│  activity.jsonl │   └─►│  activity.jsonl  │
+                                     │  plans/auth.md   │      │ REVIEW-codex.md │      │ REVIEW-claude.md │
+                                     │                  │      │                 │      │                  │
+                                     └──────────────────┘      └─────────────────┘      └──────────────────┘
 ```
 
 **Key point: You are always in control.** You decide when to switch agents and what tasks to assign. The framework just ensures context is preserved across switches.
